@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "572508913061",
+    "project_id": "gramika-fc1b3",
+    "storage_bucket": "gramika-fc1b3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:572508913061:android:eddb85a4fa0c7890c9fc4c",
+        "android_client_info": {
+          "package_name": "com.example.gramikaapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-Ny3w5MYN3v18jUeKvrWciNn-JuZy_jg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
