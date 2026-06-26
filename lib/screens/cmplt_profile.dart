@@ -17,7 +17,6 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
   final _whatsappController = TextEditingController();
 
   String _selectedDistrict = 'Malappuram';
-  String _localBodyType = 'Municipality';
   String? _selectedLocalBody;
   List<String> _selectedProfessions = [];
   bool _sameAsPhone = false;
@@ -53,35 +52,6 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
     'Kasaragod',
   ];
 
-  final Map<String, List<String>> _municipalities = {
-    'Malappuram': [
-      'Perinthalmanna Municipality',
-      'Manjeri Municipality',
-      'Parappanangadi Municipality',
-      'Tirur Municipality',
-      'Nilambur Municipality',
-      'Malappuram Municipality',
-    ],
-    'Kozhikode': [
-      'Kozhikode Corporation',
-      'Vadakara Municipality',
-      'Koyilandy Municipality',
-      'Ramanattukara Municipality',
-    ],
-    'Palakkad': [
-      'Palakkad Municipality',
-      'Ottapalam Municipality',
-      'Shornur Municipality',
-      'Mannarkkad Municipality',
-    ],
-    'Thrissur': [
-      'Thrissur Corporation',
-      'Irinjalakuda Municipality',
-      'Chalakudy Municipality',
-      'Kodungallur Municipality',
-    ],
-  };
-
   final Map<String, List<String>> _panchayats = {
     'Malappuram': [
       'Thirurangadi Panchayat',
@@ -110,13 +80,6 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
       'Mala Panchayat',
     ],
   };
-
-  List<String> get _currentLocalBodies {
-    final map = _localBodyType == 'Municipality'
-        ? _municipalities
-        : _panchayats;
-    return map[_selectedDistrict] ?? [];
-  }
 
   List<String> _professionCategories = [];
 
@@ -170,7 +133,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
     final pErr = _validatePhone(_phoneController.text);
     final wErr = _validateWhatsapp(_whatsappController.text);
     final lErr = _selectedLocalBody == null || _selectedLocalBody!.isEmpty
-        ? 'Please select your ${_localBodyType.toLowerCase()}'
+        ? 'Please select your Panchayat'
         : null;
     final prErr = _selectedProfessions.isEmpty
         ? 'Select at least 1 service (max $_maxProfessions)'
@@ -220,7 +183,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         'phone': phone,
         'whatsapp': whatsapp,
         'district': _selectedDistrict,
-        'local_body_type': _localBodyType,
+        'local_body_type': 'Panchayat',
         'local_body': _selectedLocalBody ?? '',
         'professions': _selectedProfessions,
         'role': 'public',
@@ -299,15 +262,15 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                       _buildProgressHeader(),
                       const SizedBox(height: 24),
                       _buildSection(
-                        icon: Icons.phone_rounded,
-                        title: 'Contact Details',
-                        child: _buildContactSection(),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildSection(
                         icon: Icons.location_on_rounded,
                         title: 'Location',
                         child: _buildLocationSection(),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSection(
+                        icon: Icons.phone_rounded,
+                        title: 'Contact Details',
+                        child: _buildContactSection(),
                       ),
                       const SizedBox(height: 16),
                       _buildSection(
@@ -652,9 +615,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // District
         _fieldLabel('District *'),
         const SizedBox(height: 6),
+
         _buildDropdown<String>(
           value: _selectedDistrict,
           hint: 'Select district',
@@ -665,83 +628,30 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
             setState(() {
               _selectedDistrict = v!;
               _selectedLocalBody = null;
+              _localBodyError = null;
             });
           },
         ),
 
         const SizedBox(height: 18),
 
-        // Local body type toggle
-        _fieldLabel('Local Body Type *'),
-        const SizedBox(height: 10),
-        Row(
-          children: ['Municipality', 'Panchayat'].map((type) {
-            final sel = _localBodyType == type;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() {
-                  _localBodyType = type;
-                  _selectedLocalBody = null;
-                  _localBodyError = null;
-                }),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  margin: EdgeInsets.only(
-                    right: type == 'Municipality' ? 8 : 0,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: sel ? Colors.orange.shade500 : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: sel
-                          ? Colors.orange.shade500
-                          : Colors.grey.shade200,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        type == 'Municipality'
-                            ? Icons.location_city_rounded
-                            : Icons.grass_rounded,
-                        size: 16,
-                        color: sel ? Colors.white : Colors.grey.shade500,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        type,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: sel ? Colors.white : Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Local body dropdown
-        _fieldLabel('$_localBodyType *'),
+        _fieldLabel('Panchayat *'),
         const SizedBox(height: 6),
+
         _buildDropdown<String>(
           value: _selectedLocalBody,
-          hint: 'Select $_localBodyType',
+          hint: 'Select Panchayat',
           icon: Icons.location_on_rounded,
-          items: _currentLocalBodies,
+          items: _panchayats[_selectedDistrict] ?? [],
           itemLabel: (d) => d,
-          onChanged: (v) => setState(() {
-            _selectedLocalBody = v;
-            _localBodyError = null;
-          }),
+          onChanged: (v) {
+            setState(() {
+              _selectedLocalBody = v;
+              _localBodyError = null;
+            });
+          },
         ),
+
         if (_localBodyError != null) _inlineError(_localBodyError!),
       ],
     );
