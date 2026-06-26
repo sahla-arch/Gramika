@@ -464,7 +464,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               builder: (_) => AlertDialog(
                                 title: const Text('Delete Account'),
                                 content: const Text(
-                                  'Your login account will be deleted. Your complaints, feedbacks, reviews and records will remain stored.',
+                                  'Are you sure you want to delete you account? Your all account details will be deleted.',
                                 ),
                                 actions: [
                                   TextButton(
