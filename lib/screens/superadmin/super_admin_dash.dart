@@ -639,7 +639,7 @@ class StatCard extends StatelessWidget {
 }
 
 // ─── Analytics Card ───────────────────────────────────────────────────────────
-class _AnalyticsCard extends StatelessWidget {
+class _AnalyticsCard extends StatefulWidget {
   final String selectedAnalytics;
   final ValueChanged<String?> onChanged;
 
@@ -649,14 +649,68 @@ class _AnalyticsCard extends StatelessWidget {
   });
 
   @override
+  State<_AnalyticsCard> createState() => _AnalyticsCardState();
+}
+
+class _AnalyticsCardState extends State<_AnalyticsCard> {
+  List<int> weeklyData = List.filled(7, 0);
+  List<int> monthlyData = List.filled(12, 0);
+
+  @override
+  void initState() {
+    super.initState();
+    loadVisitorData();
+  }
+
+  Future<void> loadVisitorData() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('visitor_logs')
+        .get();
+
+    List<int> week = List.filled(7, 0);
+    List<int> month = List.filled(12, 0);
+
+    final now = DateTime.now();
+
+    for (final doc in snapshot.docs) {
+      final ts = doc['createdAt'] as Timestamp;
+      final date = ts.toDate();
+
+      // Weekly
+      final difference = now.difference(date).inDays;
+
+      if (difference >= 0 && difference < 7) {
+        week[6 - difference]++;
+      }
+
+      // Monthly
+      if (date.year == now.year) {
+        month[date.month - 1]++;
+      }
+    }
+
+    setState(() {
+      weeklyData = week;
+      monthlyData = month;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final weeklyData = [120, 220, 180, 260, 240, 320, 300];
-    final monthlyData = [200, 350, 450, 300, 550, 650, 480];
-    final data = selectedAnalytics == "Weekly" ? weeklyData : monthlyData;
-    final labels = selectedAnalytics == "Weekly"
+    final data = widget.selectedAnalytics == "Weekly"
+        ? weeklyData
+        : monthlyData;
+
+    final labels = widget.selectedAnalytics == "Weekly"
         ? ["M", "T", "W", "T", "F", "S", "S"]
-        : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
-    final maxVal = data.reduce((a, b) => a > b ? a : b).toDouble();
+        : ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+
+    double maxVal = 1;
+
+    if (data.isNotEmpty) {
+      maxVal = data.reduce((a, b) => a > b ? a : b).toDouble();
+      if (maxVal == 0) maxVal = 1;
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -695,7 +749,7 @@ class _AnalyticsCard extends StatelessWidget {
                   ),
                 ),
                 child: DropdownButton<String>(
-                  value: selectedAnalytics,
+                  value: widget.selectedAnalytics,
                   underline: const SizedBox(),
                   isDense: true,
                   style: const TextStyle(
@@ -707,14 +761,14 @@ class _AnalyticsCard extends StatelessWidget {
                     DropdownMenuItem(value: "Weekly", child: Text("Weekly")),
                     DropdownMenuItem(value: "Monthly", child: Text("Monthly")),
                   ],
-                  onChanged: onChanged,
+                  onChanged: widget.onChanged,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            selectedAnalytics == "Weekly"
+            widget.selectedAnalytics == "Weekly"
                 ? "This week's visits"
                 : "Monthly visit trends",
             style: const TextStyle(fontSize: 12, color: _kSubtext),
