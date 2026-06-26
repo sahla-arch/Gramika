@@ -90,23 +90,46 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     });
 
     final List<_Result> found = [];
+    final List<_Result> categoryResults = [];
 
     try {
       // Directories
       final dirs = await FirebaseFirestore.instance
           .collection('directories')
           .get();
+
       for (final doc in dirs.docs) {
         final d = doc.data();
-        final match = [
-          d['name'],
-          d['category'],
-          d['district'],
-          d['panchayat'],
-          d['tags'],
-        ].any((v) => v?.toString().toLowerCase().contains(q) == true);
-        if (match) {
+
+        final nameMatch = (d['name'] ?? '').toString().toLowerCase().contains(
+          q,
+        );
+
+        final tagMatch = (d['tags'] ?? '').toString().toLowerCase().contains(q);
+
+        final locationMatch =
+            (d['district'] ?? '').toString().toLowerCase().contains(q) ||
+            (d['panchayat'] ?? '').toString().toLowerCase().contains(q);
+
+        final categoryMatch = (d['category'] ?? '')
+            .toString()
+            .toLowerCase()
+            .contains(q);
+
+        if (nameMatch || tagMatch || locationMatch) {
           found.add(
+            _Result(
+              type: 'directory',
+              title: d['name'] ?? d['title'] ?? 'Directory',
+              subtitle: [
+                d['category'],
+                d['district'],
+              ].whereType<String>().join(' • '),
+              data: d,
+            ),
+          );
+        } else if (categoryMatch) {
+          categoryResults.add(
             _Result(
               type: 'directory',
               title: d['name'] ?? d['title'] ?? 'Directory',
@@ -119,7 +142,6 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
           );
         }
       }
-
       // Emergency contacts
       final emg = await FirebaseFirestore.instance
           .collection('emergency_contacts')
@@ -167,14 +189,21 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
         }
       }
     } catch (_) {
-      // Silently handle errors; show empty state
+      found.addAll(categoryResults); // Silently handle errors; show empty state
     }
 
-    if (mounted)
+    found.sort((a, b) {
+      final pa = (a.data['priority'] ?? 99) as int;
+      final pb = (b.data['priority'] ?? 99) as int;
+      return pa.compareTo(pb);
+    });
+
+    if (mounted) {
       setState(() {
         _results = found;
         _loading = false;
       });
+    }
   }
 
   void _clear() {
