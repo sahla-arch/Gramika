@@ -110,7 +110,7 @@ class _SignUpPageState extends State<SignUpPage>
   String _friendlyError(String code) {
     switch (code) {
       case 'email-already-in-use':
-        return 'An account already exists with this email.';
+        return '';
       case 'invalid-email':
         return 'This email address is not valid.';
       case 'weak-password':
@@ -152,6 +152,7 @@ class _SignUpPageState extends State<SignUpPage>
             'createdAt': FieldValue.serverTimestamp(),
             'isProfileComplete': false,
             'termsAccepted': false,
+            'role': 'customer',
           });
 
       await FirebaseFirestore.instance.collection('visitor_logs').add({
@@ -167,7 +168,57 @@ class _SignUpPageState extends State<SignUpPage>
         MaterialPageRoute(builder: (_) => const TermsConditionsPage()),
       );
     } on FirebaseAuthException catch (e) {
-      setState(() => _generalError = _friendlyError(e.code));
+      if (e.code == 'email-already-in-use') {
+        try {
+          final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(cred.user!.uid)
+              .get();
+
+          final data = doc.data() ?? {};
+
+          final termsAccepted = data['termsAccepted'] ?? false;
+
+          final profileComplete = data['isProfileComplete'] ?? false;
+
+          if (!mounted) return;
+
+          if (!termsAccepted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const TermsConditionsPage()),
+            );
+          } else if (!profileComplete) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const CompleteProfilePage()),
+            );
+          } else {
+            setState(() {
+              _generalError =
+                  'An account with this email already exists. Please sign in.';
+            });
+          }
+
+          return;
+        } on FirebaseAuthException {
+          setState(() {
+            _generalError =
+                'This email is already registered with another password.';
+          });
+
+          return;
+        }
+      }
+
+      setState(() {
+        _generalError = _friendlyError(e.code);
+      });
     } catch (e) {
       setState(() => _generalError = 'Something went wrong. Please try again.');
     } finally {
@@ -209,6 +260,7 @@ class _SignUpPageState extends State<SignUpPage>
           'createdAt': FieldValue.serverTimestamp(),
           'isProfileComplete': false,
           'termsAccepted': false,
+          'role': 'customer',
         });
       }
 
