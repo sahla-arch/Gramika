@@ -140,6 +140,7 @@ class _LoginPageState extends State<LoginPage>
         'userId': userCredential.user!.uid,
         'email': email,
         'role': role,
+        'panchayat': '',
         'createdAt': Timestamp.now(),
       });
 
