@@ -159,6 +159,7 @@ class _SignUpPageState extends State<SignUpPage>
         'userId': cred.user!.uid,
         'email': _emailController.text.trim(),
         'role': 'user',
+        'panchayat': '',
         'createdAt': Timestamp.now(),
       });
 
