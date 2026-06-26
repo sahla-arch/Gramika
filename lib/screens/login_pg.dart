@@ -109,7 +109,7 @@ class _LoginPageState extends State<LoginPage>
           .collection('users')
           .where('email', isEqualTo: email)
           .get();
-
+      final userMap = userData.docs.first.data() as Map<String, dynamic>;
       if (userData.docs.isEmpty) {
         throw Exception("User not found in Firestore");
       }
@@ -140,7 +140,7 @@ class _LoginPageState extends State<LoginPage>
         'userId': userCredential.user!.uid,
         'email': email,
         'role': role,
-        'panchayat': '',
+        'panchayat': userMap['panchayat'] ?? '',
         'createdAt': Timestamp.now(),
       });
 
